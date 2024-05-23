@@ -1,0 +1,37 @@
+name:  Ci/ Cd springboot-demo
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ['self-hosted', 'Linux', 'X64', 'kotlin' ]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v2
+      with:
+        java-version: '21'
+        distribution: 'adopt'
+    
+    - name: stop old container
+      run: sudo docker container stop demo-container || true
+
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+    - name: Delete old container 
+      run: sudo docker container rm demo-container|| true
+    - name: Delete old image 
+      run:  sudo docker image rm demo|| true
+
+    - name: Build the Docker image
+      run: sudo docker build -t demo .
+      
+   
+    - name: Run docker image
+      run: sudo docker run -d -p 8080:8080 --name demo-container demo sleep infinity| echo "success"
